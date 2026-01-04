@@ -115,29 +115,6 @@ If you disconnect during a game:
 - Use your username and game ID to rejoin
 - If you don't reconnect in time, the game is forfeited
 
-## 📊 Kafka Analytics (Optional)
-
-To enable Kafka analytics:
-
-1. Install and start Kafka
-2. Create a topic named `game-events`:
-   ```bash
-   kafka-topics --create --topic game-events --bootstrap-server localhost:9092
-   ```
-3. Update `KAFKA_BROKERS` in backend `.env`
-4. Start the Kafka consumer (in a separate terminal):
-   ```bash
-   cd backend
-   npm run consumer
-   ```
-5. Events will be sent to Kafka and processed by the consumer
-
-**Events tracked:**
-- Game started
-- Move made
-- Game ended (with duration, winner, status)
-
-**Note:** If Kafka is not configured, events will be logged to the console as a fallback.
 
 ## 🏗 Project Structure
 
