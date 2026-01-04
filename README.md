@@ -1,6 +1,6 @@
 # 🎯 4 in a Row - Real-Time Multiplayer Game
 
-A real-time multiplayer version of the classic **4 in a Row** (Connect Four) game built with Node.js, Express, Socket.io, React, and MongoDB. Features include player matchmaking, competitive bot opponent, game persistence, leaderboard, and Kafka analytics integration.
+A real-time multiplayer version of the classic **4 in a Row** (Connect Four) game built with Node.js, Express, Socket.io, React, and MongoDB. Features include player matchmaking, competitive bot opponent, game persistence, and leaderboard.
 
 ## 🚀 Features
 
@@ -10,14 +10,12 @@ A real-time multiplayer version of the classic **4 in a Row** (Connect Four) gam
 - **Player reconnection** within 30 seconds
 - **Game persistence** using MongoDB
 - **Leaderboard** tracking wins and statistics
-- **Kafka integration** for game analytics (optional)
-- **React frontend** with clean UI
+- **React frontend** with clean, mobile-responsive UI
 
 ## 📋 Prerequisites
 
 - Node.js (v14 or higher)
 - MongoDB (local or MongoDB Atlas)
-- Kafka (optional, for analytics)
 
 ## 🛠 Installation & Setup
 
@@ -40,13 +38,12 @@ Create a `.env` file in the `backend` directory:
 ```env
 PORT=3001
 MONGODB_URI=mongodb://localhost:27017/4inarow
-KAFKA_BROKERS=localhost:9092
+JWT_SECRET=your-secret-key-here
 ```
 
 **Note:** 
 - If using MongoDB Atlas, replace `MONGODB_URI` with your connection string
-- Kafka is optional - if not configured, events will be logged to console
-- To run the Kafka consumer: `npm run consumer` (separate terminal)
+- Generate a secure random string for `JWT_SECRET` in production
 
 ### 3. Frontend Setup
 
@@ -115,7 +112,6 @@ If you disconnect during a game:
 - Use your username and game ID to rejoin
 - If you don't reconnect in time, the game is forfeited
 
-
 ## 🏗 Project Structure
 
 ```
@@ -129,7 +125,7 @@ If you disconnect during a game:
 │   ├── services/
 │   │   ├── MatchmakingService.js  # Player matchmaking
 │   │   ├── LeaderboardService.js  # Leaderboard logic
-│   │   └── KafkaProducer.js       # Kafka event producer
+│   │   └── AuthService.js         # Authentication service
 │   ├── server.js              # Main server file
 │   └── package.json
 ├── frontend/
