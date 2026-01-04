@@ -14,14 +14,21 @@ const { AuthService } = require('./services/AuthService');
 
 const app = express();
 const server = http.createServer(app);
+
+// CORS configuration - allow frontend URL in production
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production' ? FRONTEND_URL : '*',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
 const io = socketIo(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
-  }
+  cors: corsOptions
 });
 
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // MongoDB connection
