@@ -248,14 +248,4 @@ To enable Kafka analytics:
 - Check browser console for errors
 - Verify backend logs
 
-## 📄 License
-
-This project is created as an assignment submission.
-
-## 👤 Author
-
-Created as a backend engineering intern assignment.
-
----
-
 **Enjoy playing 4 in a Row! 🎮**
