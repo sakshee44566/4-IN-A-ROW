@@ -250,5 +250,188 @@ code {
   text-align: center;
 }
 
+/* Mobile Responsive Styles */
+@media screen and (max-width: 768px) {
+  .app {
+    padding: 10px;
+    max-width: 100%;
+  }
+
+  .header h1 {
+    font-size: 1.8em;
+    margin-bottom: 5px;
+  }
+
+  .game-container {
+    gap: 15px;
+  }
+
+  .login-screen,
+  .waiting-screen,
+  .game-board-container,
+  .leaderboard {
+    padding: 20px;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .login-screen input {
+    width: 100%;
+    max-width: 100%;
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 14px;
+  }
+
+  .login-screen button {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+  }
+
+  .game-board {
+    padding: 5px;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  .cell {
+    width: 40px;
+    height: 40px;
+    margin: 3px;
+    font-size: 18px;
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .game-info h2 {
+    font-size: 1.2em;
+  }
+
+  .game-info p {
+    font-size: 0.9em;
+  }
+
+  .game-status {
+    font-size: 16px;
+    padding: 12px;
+  }
+
+  .leaderboard {
+    overflow-x: auto;
+  }
+
+  .leaderboard-table {
+    font-size: 14px;
+    min-width: 100%;
+  }
+
+  .leaderboard-table th,
+  .leaderboard-table td {
+    padding: 8px 6px;
+    font-size: 14px;
+  }
+
+  .leaderboard h2 {
+    font-size: 1.3em;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .app {
+    padding: 5px;
+  }
+
+  .header h1 {
+    font-size: 1.5em;
+  }
+
+  .login-screen,
+  .waiting-screen,
+  .game-board-container,
+  .leaderboard {
+    padding: 15px;
+    border-radius: 8px;
+  }
+
+  .login-screen h2,
+  .waiting-screen h2 {
+    font-size: 1.2em;
+    margin-bottom: 15px;
+  }
+
+  .cell {
+    width: 35px;
+    height: 35px;
+    margin: 2px;
+    font-size: 16px;
+    min-width: 35px;
+    min-height: 35px;
+  }
+
+  .game-board {
+    padding: 3px;
+  }
+
+  .game-info h2 {
+    font-size: 1.1em;
+  }
+
+  .game-info p {
+    font-size: 0.85em;
+    line-height: 1.4;
+  }
+
+  .game-status {
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  .leaderboard-table {
+    font-size: 12px;
+  }
+
+  .leaderboard-table th,
+  .leaderboard-table td {
+    padding: 6px 4px;
+    font-size: 12px;
+  }
+
+  /* Make buttons touch-friendly */
+  button {
+    min-height: 44px; /* iOS recommended touch target */
+    min-width: 44px;
+  }
+}
+
+/* Landscape mobile optimization */
+@media screen and (max-width: 768px) and (orientation: landscape) {
+  .cell {
+    width: 45px;
+    height: 45px;
+    margin: 3px;
+  }
+
+  .game-board-container {
+    padding: 15px;
+  }
+}
+
+/* Prevent text selection on game cells for better mobile experience */
+.cell {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Improve touch targets for column headers */
+.cell[style*="cursor: pointer"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+
 
 

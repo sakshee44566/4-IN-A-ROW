@@ -499,14 +499,17 @@ function App() {
               borderRadius: '8px',
               marginBottom: '15px',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-              border: '1px solid #e0e0e0'
+              border: '1px solid #e0e0e0',
+              width: '100%',
+              boxSizing: 'border-box'
             }}>
               <div style={{ 
                 display: 'flex', 
                 justifyContent: 'space-between', 
                 alignItems: 'center',
                 flexWrap: 'wrap',
-                gap: '10px'
+                gap: '10px',
+                width: '100%'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span style={{ 
@@ -539,7 +542,14 @@ function App() {
             </div>
 
             {status === 'ended' && (
-              <div style={{ display: 'flex', gap: '10px', marginTop: '20px', justifyContent: 'center' }}>
+              <div style={{ 
+                display: 'flex', 
+                gap: '10px', 
+                marginTop: '20px', 
+                justifyContent: 'center',
+                flexWrap: 'wrap',
+                width: '100%'
+              }}>
                 <button
                   onClick={() => {
                     setStatus('waiting');
@@ -552,13 +562,17 @@ function App() {
                     fetchLeaderboard();
                   }}
                   style={{
-                    padding: '10px 20px',
+                    padding: '12px 24px',
                     fontSize: '16px',
                     backgroundColor: '#4CAF50',
                     color: 'white',
                     border: 'none',
                     borderRadius: '5px',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    minWidth: '120px',
+                    minHeight: '44px',
+                    flex: '1',
+                    maxWidth: '200px'
                   }}
                 >
                   Play Again
@@ -566,13 +580,17 @@ function App() {
                 <button
                   onClick={handleLogout}
                   style={{
-                    padding: '10px 20px',
+                    padding: '12px 24px',
                     fontSize: '16px',
                     backgroundColor: '#f44336',
                     color: 'white',
                     border: 'none',
                     borderRadius: '5px',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    minWidth: '120px',
+                    minHeight: '44px',
+                    flex: '1',
+                    maxWidth: '200px'
                   }}
                 >
                   Logout
