@@ -387,6 +387,11 @@ function App() {
                 ✓ Connected to server
               </div>
             )}
+            {error && (
+              <div className="error" style={{ marginBottom: '10px' }}>
+                {error}
+              </div>
+            )}
             <form onSubmit={handleAuth}>
               <input
                 type="text"

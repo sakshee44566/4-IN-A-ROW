@@ -44,7 +44,7 @@ class AuthService {
     try {
       const user = await User.findOne({ username: username.trim() });
       if (!user) {
-        return { success: false, message: 'Invalid username or password' };
+        return { success: false, message: 'User not registered. Please register first to play.' };
       }
 
       const isMatch = await user.comparePassword(password);
