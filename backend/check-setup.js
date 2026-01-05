@@ -1,4 +1,3 @@
-// Quick setup checker
 const mongoose = require('mongoose');
 require('dotenv').config();
 
@@ -6,7 +5,6 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/4inaro
 
 console.log('Checking setup...\n');
 
-// Check MongoDB
 console.log('Checking MongoDB connection...');
 mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,

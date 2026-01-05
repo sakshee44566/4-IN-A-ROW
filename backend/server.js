@@ -15,7 +15,6 @@ const { AuthService } = require('./services/AuthService');
 const app = express();
 const server = http.createServer(app);
 
-// CORS configuration - allow frontend URL in production
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' ? FRONTEND_URL : '*',
@@ -31,7 +30,6 @@ const io = socketIo(server, {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// MongoDB connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/4inarow';
 mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
@@ -50,19 +48,15 @@ const matchmakingService = new MatchmakingService();
 const leaderboardService = new LeaderboardService();
 const authService = new AuthService();
 
-// Track authenticated users: username -> { socketId, token, userId }
 const authenticatedUsers = new Map();
-// Track socket to username mapping for validation
-const socketToUser = new Map(); // socket.id -> { username, userId }
+const socketToUser = new Map();
 
-// Store active games in memory
 const activeGames = new Map();
-const playerSockets = new Map(); // username -> socket.id
-const socketPlayers = new Map(); // socket.id -> username
-const gamePlayers = new Map(); // gameId -> { player1: socketId, player2: socketId }
-const botTimers = new Map(); // username -> timer
+const playerSockets = new Map();
+const socketPlayers = new Map();
+const gamePlayers = new Map();
+const botTimers = new Map();
 
-// Helper function to start a game
 async function startGame(player1, player2, gameId, io) {
   console.log(`\n🎮 Starting game: ${player1} vs ${player2}, gameId: ${gameId}`);
   const gameEngine = new GameEngine(player1, player2);
@@ -78,25 +72,21 @@ async function startGame(player1, player2, gameId, io) {
   const socket1Id = playerSockets.get(player1);
   let socket1 = socket1Id ? io.sockets.sockets.get(socket1Id) : null;
   
-  // Fallback: try to find socket by username in authenticated users
   if (!socket1 && authenticatedUsers.has(player1)) {
     const authInfo = authenticatedUsers.get(player1);
     socket1 = io.sockets.sockets.get(authInfo.socketId);
     if (socket1) {
-      // Update the mapping
       playerSockets.set(player1, authInfo.socketId);
       socketPlayers.set(authInfo.socketId, player1);
       console.log(`  ✓ Found socket via authenticatedUsers fallback for ${player1}`);
     }
   }
   
-  // Another fallback: search all connected sockets for this username
   if (!socket1) {
     for (const [socketId, socket] of io.sockets.sockets.entries()) {
       const userInfo = socketToUser.get(socketId);
       if (userInfo && userInfo.username === player1) {
         socket1 = socket;
-        // Update mappings
         playerSockets.set(player1, socketId);
         socketPlayers.set(socketId, player1);
         console.log(`  ✓ Found socket via socketToUser search for ${player1}`);
@@ -122,7 +112,6 @@ async function startGame(player1, player2, gameId, io) {
     console.log(`  ✗ ERROR: Could not find socket for ${player1} after all fallback attempts`);
     console.log(`  Current playerSockets:`, Array.from(playerSockets.keys()));
     console.log(`  Current authenticatedUsers:`, Array.from(authenticatedUsers.keys()));
-    // The gameState event will still be sent to the room, but the socket needs to join first
   }
 
   if (socket2) {
@@ -135,7 +124,6 @@ async function startGame(player1, player2, gameId, io) {
     console.log(`  ✓ matchFound event sent to ${player2}`);
   }
 
-  // Send initial game state
   const initialState = {
     gameId: gameId,
     board: gameEngine.getBoard(),
@@ -147,10 +135,8 @@ async function startGame(player1, player2, gameId, io) {
     }
   };
   
-  // Emit to the room (this will reach all sockets in the room)
   io.to(gameId).emit('gameState', initialState);
   
-  // Also try to emit directly to socket1 if found (as a backup)
   if (socket1) {
     socket1.emit('gameState', initialState);
   }
@@ -159,7 +145,6 @@ async function startGame(player1, player2, gameId, io) {
   console.log(`  Game status: ${gameEngine.getStatus()}, Current player: ${gameEngine.getCurrentPlayer()}\n`);
 }
 
-// API Routes
 app.get('/api/leaderboard', async (req, res) => {
   try {
     const leaderboard = await leaderboardService.getLeaderboard();
@@ -181,7 +166,6 @@ app.get('/api/game/:gameId', async (req, res) => {
   }
 });
 
-// Authentication Routes
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -232,7 +216,6 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// WebSocket connection handling
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
   
@@ -240,7 +223,6 @@ io.on('connection', (socket) => {
     console.log('Client disconnected:', socket.id);
     const userInfo = socketToUser.get(socket.id);
     if (userInfo) {
-      // Remove socket mapping
       socketToUser.delete(socket.id);
       const authInfo = authenticatedUsers.get(userInfo.username);
       if (authInfo && authInfo.socketId === socket.id) {
@@ -266,16 +248,13 @@ io.on('connection', (socket) => {
 
       const { userId, username } = decoded;
 
-      // Check if user is already connected from another session
       const existingAuth = authenticatedUsers.get(username);
       if (existingAuth && existingAuth.socketId !== socket.id) {
-        // Disconnect old session
         const oldSocket = io.sockets.sockets.get(existingAuth.socketId);
         if (oldSocket) {
           oldSocket.emit('authError', { message: 'You have logged in from another device/session' });
           oldSocket.disconnect();
         }
-        // Clean up stale state from old session
         console.log(`Cleaning up stale state for ${username} from previous session`);
         matchmakingService.removePlayer(username);
         if (botTimers.has(username)) {
@@ -286,7 +265,6 @@ io.on('connection', (socket) => {
         socketPlayers.delete(existingAuth.socketId);
       }
 
-      // Store authentication info
       authenticatedUsers.set(username, { socketId: socket.id, token, userId });
       socketToUser.set(socket.id, { username, userId });
       
@@ -301,7 +279,6 @@ io.on('connection', (socket) => {
   socket.on('join', async ({ username, gameId, token }) => {
     console.log('Join event received:', { username, gameId, socketId: socket.id });
     try {
-      // Validate authentication
       if (!token) {
         socket.emit('error', { message: 'Authentication required. Please login first.' });
         return;
@@ -313,13 +290,11 @@ io.on('connection', (socket) => {
         return;
       }
 
-      // Ensure username matches authenticated user
       if (decoded.username !== username) {
         socket.emit('error', { message: 'You can only play as your own account' });
         return;
       }
 
-      // Verify this socket is authenticated for this user
       const userInfo = socketToUser.get(socket.id);
       if (!userInfo || userInfo.username !== username) {
         socket.emit('error', { message: 'Please authenticate first' });
@@ -331,43 +306,35 @@ io.on('connection', (socket) => {
         return;
       }
       
-      // Clean up any stale state from previous sessions
-      // This handles the case where user didn't logout properly last time
       console.log(`Cleaning up stale state for ${username}`);
       
-      // Remove from matchmaking if they were waiting
       if (matchmakingService.isPlayerWaiting(username)) {
         console.log(`Removing ${username} from matchmaking queue (stale state)`);
         matchmakingService.removePlayer(username);
       }
       
-      // Clear any bot timer
       if (botTimers.has(username)) {
         console.log(`Clearing bot timer for ${username} (stale state)`);
         clearTimeout(botTimers.get(username));
         botTimers.delete(username);
       }
       
-      // Remove from any stale socket mappings (will be re-added below)
       const oldSocketId = playerSockets.get(username);
       if (oldSocketId && oldSocketId !== socket.id) {
         console.log(`Removing stale socket mapping for ${username}: ${oldSocketId} -> ${socket.id}`);
         socketPlayers.delete(oldSocketId);
       }
       
-      // If gameId is provided, try to reconnect to existing game
       if (gameId) {
         const gameData = activeGames.get(gameId);
         if (gameData) {
           const game = gameData.game;
           const playerInfo = gamePlayers.get(gameId);
           
-          // Check if this is a valid reconnection
           if (playerInfo && (playerInfo.player1 === username || playerInfo.player2 === username)) {
             playerSockets.set(username, socket.id);
             socketPlayers.set(socket.id, username);
             
-            // Update socket mapping
             if (playerInfo.player1 === username) {
               playerInfo.socket1 = socket.id;
             } else if (playerInfo.player2 === username) {
@@ -386,21 +353,17 @@ io.on('connection', (socket) => {
               }
             });
             
-            // Notify opponent
             socket.to(gameId).emit('playerReconnected', { username });
             return;
           }
         }
       }
 
-      // New matchmaking
       const result = matchmakingService.addPlayer(username, socket.id);
       
-      // Update mappings with authenticated username
       playerSockets.set(username, socket.id);
       socketPlayers.set(socket.id, username);
       
-      // Ensure userInfo is set (should already be set from authentication)
       const currentUserInfo = socketToUser.get(socket.id);
       if (!currentUserInfo) {
         socketToUser.set(socket.id, { username, userId: decoded.userId });
@@ -408,9 +371,7 @@ io.on('connection', (socket) => {
       
       socket.emit('matchmaking', { status: 'waiting' });
 
-      // If match found immediately
       if (result.matchFound) {
-        // Clear any existing bot timer
         if (botTimers.has(result.player1)) {
           clearTimeout(botTimers.get(result.player1));
           botTimers.delete(result.player1);
@@ -421,27 +382,22 @@ io.on('connection', (socket) => {
         }
         await startGame(result.player1, result.player2, result.gameId, io);
       } else {
-        // No immediate match, set timer for bot
         console.log(`Player ${username} waiting for match. Bot will start in 10 seconds if no opponent joins.`);
         const timer = setTimeout(async () => {
           console.log(`Bot timer fired for ${username}`);
           console.log(`Is player waiting?`, matchmakingService.isPlayerWaiting(username));
           
-          // Check if player socket still exists
           const playerSocketId = playerSockets.get(username);
           const playerSocket = playerSocketId ? io.sockets.sockets.get(playerSocketId) : null;
           const isSocketConnected = playerSocket && playerSocket.connected;
           
           console.log(`Player socket exists:`, !!playerSocket, `Connected:`, isSocketConnected);
           
-          // Start bot game if player is waiting OR if socket is still connected
-          // This ensures the game starts even if there's a minor state mismatch
           if (matchmakingService.isPlayerWaiting(username) || isSocketConnected) {
             console.log(`No opponent found for ${username}. Starting bot game...`);
             matchmakingService.removePlayer(username);
             botTimers.delete(username);
             
-            // Start bot game
             const gameId = `game_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
             await startGame(username, 'BOT', gameId, io);
             console.log(`Bot game started for ${username} with gameId: ${gameId}`);
@@ -462,7 +418,6 @@ io.on('connection', (socket) => {
   socket.on('makeMove', async ({ gameId, column, token }) => {
     console.log('makeMove received:', { gameId, column, socketId: socket.id });
     try {
-      // Validate authentication
       if (!token) {
         socket.emit('error', { message: 'Authentication required' });
         return;
@@ -493,10 +448,9 @@ io.on('connection', (socket) => {
       }
 
       const game = gameData.game;
-      const username = userInfo.username; // Use authenticated username
+      const username = userInfo.username;
       const playerInfo = gamePlayers.get(gameId);
 
-      // Validate move - ensure user is actually a player in this game
       if (username !== playerInfo.player1 && username !== playerInfo.player2) {
         socket.emit('error', { message: 'You are not a player in this game' });
         return;
@@ -515,7 +469,6 @@ io.on('connection', (socket) => {
         return;
       }
 
-      // Make move
       console.log(`Making move: player=${username}, column=${column}, currentPlayer=${currentPlayer}`);
       const moveResult = game.makeMove(column);
       console.log(`Move result:`, moveResult);
@@ -526,15 +479,12 @@ io.on('connection', (socket) => {
       }
       console.log(`Move successful! New game status: ${game.getStatus()}`);
 
-      // Check if game is over
       let gameStatus = game.getStatus();
       if (gameStatus !== 'playing') {
-        // For draws, winner is always null
         const winner = game.getWinner();
         const winnerName = gameStatus === 'draw' ? null : (winner ? (winner === 1 ? playerInfo.player1 : playerInfo.player2) : null);
         console.log(`Game ended: status=${gameStatus}, winner=${winner}, winnerName=${winnerName}`);
         
-        // Save game to database (only if MongoDB is connected)
         try {
           if (mongoose.connection.readyState === 1) {
             const gameDoc = new Game({
@@ -556,19 +506,15 @@ io.on('connection', (socket) => {
           console.log('Could not save game to database:', dbError.message);
         }
 
-        // Update leaderboard (only if MongoDB is connected)
         if (mongoose.connection.readyState === 1) {
           try {
             if (winnerName) {
-              // Winner gets a win and a game
               await leaderboardService.addWin(winnerName);
-              // Loser gets only a game (loss)
               const loserName = winnerName === playerInfo.player1 ? playerInfo.player2 : playerInfo.player1;
               if (loserName !== 'BOT') {
                 await leaderboardService.addLoss(loserName);
               }
             } else if (gameStatus === 'draw') {
-              // For draws, both players get a game but no win
               if (playerInfo.player1 !== 'BOT') {
                 await leaderboardService.addLoss(playerInfo.player1);
               }
@@ -581,12 +527,10 @@ io.on('connection', (socket) => {
           }
         }
 
-        // Remove from active games
         activeGames.delete(gameId);
         gamePlayers.delete(gameId);
       }
 
-      // Broadcast game state
       gameStatus = game.getStatus();
       const gameWinner = game.getWinner();
       const winnerName = gameStatus === 'draw' ? null : (gameWinner ? (gameWinner === 1 ? playerInfo.player1 : playerInfo.player2) : null);
@@ -605,7 +549,6 @@ io.on('connection', (socket) => {
         }
       });
 
-      // If game is still playing and it's bot's turn
       if (game.getStatus() === 'playing' && playerInfo.player2 === 'BOT') {
         setTimeout(async () => {
           const botPlayer = new BotPlayer();
@@ -620,7 +563,6 @@ io.on('connection', (socket) => {
                 const botWinnerName = botGameStatus === 'draw' ? null : (botWinner ? (botWinner === 1 ? playerInfo.player1 : playerInfo.player2) : null);
                 console.log(`Bot game ended: status=${botGameStatus}, winner=${botWinner}, winnerName=${botWinnerName}`);
                 
-                // Save game to database (only if MongoDB is connected)
                 try {
                   if (mongoose.connection.readyState === 1) {
                     const gameDoc = new Game({
@@ -640,19 +582,15 @@ io.on('connection', (socket) => {
                   console.log('Could not save game to database:', dbError.message);
                 }
 
-                // Update leaderboard (only if MongoDB is connected)
                 if (mongoose.connection.readyState === 1) {
                   try {
                     if (botWinnerName) {
-                      // Winner gets a win and a game
                       await leaderboardService.addWin(botWinnerName);
-                      // Loser gets only a game (loss)
                       const botLoserName = botWinnerName === playerInfo.player1 ? playerInfo.player2 : playerInfo.player1;
                       if (botLoserName !== 'BOT') {
                         await leaderboardService.addLoss(botLoserName);
                       }
                     } else if (botGameStatus === 'draw') {
-                      // For draws, both players get a game but no win
                       if (playerInfo.player1 !== 'BOT') {
                         await leaderboardService.addLoss(playerInfo.player1);
                       }
@@ -699,30 +637,25 @@ io.on('connection', (socket) => {
     console.log('Client disconnected:', socket.id, username);
 
     if (username) {
-      // Find game for this player
       for (const [gameId, playerInfo] of gamePlayers.entries()) {
         if (playerInfo.player1 === username || playerInfo.player2 === username) {
           const gameData = activeGames.get(gameId);
           if (gameData && gameData.game.getStatus() === 'playing') {
-            // Start reconnection timer (30 seconds)
             setTimeout(async () => {
               const currentGameData = activeGames.get(gameId);
               const currentPlayerInfo = gamePlayers.get(gameId);
               
               if (currentGameData && currentGameData.game.getStatus() === 'playing') {
-                // Check if player reconnected
                 const socket1Exists = io.sockets.sockets.get(currentPlayerInfo.socket1);
                 const socket2Exists = io.sockets.sockets.get(currentPlayerInfo.socket2);
                 
                 if (!socket1Exists || !socket2Exists) {
-                  // Player didn't reconnect - forfeit game
                   const disconnectedPlayer = !socket1Exists ? currentPlayerInfo.player1 : currentPlayerInfo.player2;
                   const winner = disconnectedPlayer === currentPlayerInfo.player1 ? currentPlayerInfo.player2 : currentPlayerInfo.player1;
                   
                   const game = currentGameData.game;
                   game.setStatus('forfeited');
                   
-                  // Save game to database (only if MongoDB is connected)
                   try {
                     if (mongoose.connection.readyState === 1) {
                       const gameDoc = new Game({
@@ -742,14 +675,11 @@ io.on('connection', (socket) => {
                     console.log('Could not save game to database:', dbError.message);
                   }
 
-                  // Update leaderboard (only if MongoDB is connected)
                   if (mongoose.connection.readyState === 1) {
                     try {
-                      // Winner gets a win and a game
                       if (winner !== 'BOT') {
                         await leaderboardService.addWin(winner);
                       }
-                      // Disconnected player gets only a game (loss)
                       if (disconnectedPlayer !== 'BOT') {
                         await leaderboardService.addLoss(disconnectedPlayer);
                       }
@@ -776,13 +706,11 @@ io.on('connection', (socket) => {
             }, 30000);
           }
           
-          // Notify opponent
           socket.to(gameId).emit('playerDisconnected', { username });
           break;
         }
       }
 
-      // Clear bot timer if exists
       if (botTimers.has(username)) {
         clearTimeout(botTimers.get(username));
         botTimers.delete(username);

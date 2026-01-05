@@ -7,20 +7,17 @@ const JWT_EXPIRES_IN = '7d';
 class AuthService {
   async register(username, password) {
     try {
-      // Check if user already exists
       const existingUser = await User.findOne({ username: username.toLowerCase() });
       if (existingUser) {
         return { success: false, message: 'Username already taken' };
       }
 
-      // Create new user
       const user = new User({
         username: username.trim(),
         password: password
       });
       await user.save();
 
-      // Generate token
       const token = this.generateToken(user._id.toString(), user.username);
 
       return {
@@ -55,7 +52,6 @@ class AuthService {
         return { success: false, message: 'Invalid username or password' };
       }
 
-      // Generate token
       const token = this.generateToken(user._id.toString(), user.username);
 
       return {
@@ -89,6 +85,7 @@ class AuthService {
 }
 
 module.exports = { AuthService };
+
 
 
 

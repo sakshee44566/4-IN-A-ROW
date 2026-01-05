@@ -278,7 +278,7 @@ code {
   .login-screen input {
     width: 100%;
     max-width: 100%;
-    font-size: 16px; /* Prevents zoom on iOS */
+    font-size: 16px;
     padding: 14px;
   }
 
@@ -396,14 +396,12 @@ code {
     font-size: 12px;
   }
 
-  /* Make buttons touch-friendly */
   button {
-    min-height: 44px; /* iOS recommended touch target */
+    min-height: 44px;
     min-width: 44px;
   }
 }
 
-/* Landscape mobile optimization */
 @media screen and (max-width: 768px) and (orientation: landscape) {
   .cell {
     width: 45px;
@@ -416,7 +414,6 @@ code {
   }
 }
 
-/* Prevent text selection on game cells for better mobile experience */
 .cell {
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
@@ -426,7 +423,6 @@ code {
   -ms-user-select: none;
 }
 
-/* Improve touch targets for column headers */
 .cell[style*="cursor: pointer"] {
   min-height: 44px;
   min-width: 44px;

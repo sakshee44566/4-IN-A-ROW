@@ -23,12 +23,10 @@ function App() {
   const reconnectTimerRef = useRef(null);
   const usernameRef = useRef(username);
 
-  // Keep usernameRef in sync with username state
   useEffect(() => {
     usernameRef.current = username;
   }, [username]);
 
-  // Define fetchLeaderboard before it's used
   const fetchLeaderboard = async () => {
     try {
       const response = await fetch(`${API_URL}/api/leaderboard`);
@@ -40,10 +38,8 @@ function App() {
   };
 
   useEffect(() => {
-    // Load leaderboard on mount
     fetchLeaderboard();
     
-    // Set up socket connection with auto-reconnect enabled
     const newSocket = io(SOCKET_URL, {
       reconnection: true,
       reconnectionDelay: 100,
@@ -52,7 +48,6 @@ function App() {
     });
     setSocket(newSocket);
 
-    // Check initial connection state
     if (newSocket.connected) {
       setSocketConnected(true);
     }
@@ -86,7 +81,6 @@ function App() {
       console.log('Reconnected to server');
       setSocketConnected(true);
       setError(null);
-      // Re-authenticate if token exists
       if (token) {
         newSocket.emit('authenticate', { token });
       }
@@ -117,10 +111,7 @@ function App() {
         setGameId(data.gameId);
       }
       if (data.status === 'playing') {
-        // Always set status to playing when gameState shows playing
-        // This ensures we transition from waiting to playing even if matchFound wasn't received
         setStatus('playing');
-        // Set opponent if not already set
         if (data.players) {
           const myUsername = usernameRef.current;
           const opponent = data.players.player1 === myUsername ? data.players.player2 : data.players.player1;
@@ -152,7 +143,6 @@ function App() {
       setError(null);
     });
 
-    // Capture the ref value for cleanup
     const reconnectTimer = reconnectTimerRef.current;
 
     return () => {
@@ -161,9 +151,8 @@ function App() {
         clearTimeout(reconnectTimer);
       }
     };
-  }, []); // Empty dependency array - socket should only be created once on mount
+  }, []);
 
-  // Separate effect for authentication when token or socket changes
   useEffect(() => {
     if (socket && token && socketConnected) {
       socket.emit('authenticate', { token });
@@ -171,7 +160,6 @@ function App() {
   }, [socket, token, socketConnected]);
 
   useEffect(() => {
-    // Refresh leaderboard periodically
     const interval = setInterval(fetchLeaderboard, 5000);
     return () => clearInterval(interval);
   }, []);
@@ -205,7 +193,6 @@ function App() {
         usernameRef.current = data.user.username;
         setError(null);
         
-        // Authenticate socket and join
         if (socket) {
           socket.emit('authenticate', { token: data.token });
           setTimeout(() => {
@@ -232,12 +219,8 @@ function App() {
     setGameId(null);
     setError(null);
     
-    // Disconnect socket to clear server-side auth state
-    // Then immediately reconnect to maintain connection for smooth UX
     if (socket) {
       socket.disconnect();
-      // Reconnect immediately after disconnect to maintain connection state
-      // This ensures the UI shows "Connected" without requiring a page refresh
       socket.connect();
     }
   };
@@ -312,7 +295,6 @@ function App() {
   const renderBoard = () => {
     if (!gameState) return null;
 
-    // Column headers (clickable)
     const columnHeaders = [];
     for (let col = 0; col < 7; col++) {
       columnHeaders.push(

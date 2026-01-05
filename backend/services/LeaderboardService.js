@@ -23,9 +23,8 @@ const Leaderboard = mongoose.models.Leaderboard || mongoose.model('Leaderboard',
 class LeaderboardService {
   async addWin(username) {
     try {
-      // Check if MongoDB is connected
       if (mongoose.connection.readyState !== 1) {
-        return; // Silently skip if MongoDB not connected
+        return;
       }
       await Leaderboard.findOneAndUpdate(
         { username: username },
@@ -33,15 +32,13 @@ class LeaderboardService {
         { upsert: true, new: true }
       );
     } catch (error) {
-      // Silently ignore errors if MongoDB not available
     }
   }
 
   async addLoss(username) {
     try {
-      // Check if MongoDB is connected
       if (mongoose.connection.readyState !== 1) {
-        return; // Silently skip if MongoDB not connected
+        return;
       }
       await Leaderboard.findOneAndUpdate(
         { username: username },
@@ -49,15 +46,13 @@ class LeaderboardService {
         { upsert: true, new: true }
       );
     } catch (error) {
-      // Silently ignore errors if MongoDB not available
     }
   }
 
   async addGame(username) {
     try {
-      // Check if MongoDB is connected
       if (mongoose.connection.readyState !== 1) {
-        return; // Silently skip if MongoDB not connected
+        return;
       }
       await Leaderboard.findOneAndUpdate(
         { username: username },
@@ -65,13 +60,11 @@ class LeaderboardService {
         { upsert: true, new: true }
       );
     } catch (error) {
-      // Silently ignore errors if MongoDB not available
     }
   }
 
   async getLeaderboard(limit = 10) {
     try {
-      // Check if MongoDB is connected
       if (mongoose.connection.readyState !== 1) {
         return [];
       }
@@ -88,7 +81,6 @@ class LeaderboardService {
         winRate: entry.games > 0 ? ((entry.wins / entry.games) * 100).toFixed(2) : 0
       }));
     } catch (error) {
-      // Silently return empty array if MongoDB is not available
       return [];
     }
   }
